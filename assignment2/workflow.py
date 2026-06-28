@@ -186,14 +186,25 @@ def sales_agent(state: SupportState) -> SupportState:
 
 The retrieved context is the authoritative company knowledge base.
 
+Use the retrieved context as the authoritative source of truth.
+
+If pricing information exists in the retrieved context, include it in the response.
+
+Only state that information was not found if the retrieved context genuinely does not contain the requested information.
+
 You are forbidden from:
 * guessing
 * inferring
 * using pretrained knowledge
 * inventing values (such as plans, prices, features, or policies)
 
-If information is unavailable in the retrieved context, explicitly state that it was not found in company documentation:
-"The requested information was not found in the company documentation."
+Never invent:
+* URLs
+* email addresses
+* phone numbers
+* websites
+* support portals
+Only output them if they explicitly appear in retrieved context.
 
 Do not use placeholders like [Your Name] or [Your Company Name].
 
@@ -225,6 +236,14 @@ You are forbidden from:
 * inferring
 * using pretrained knowledge
 * inventing values (such as limits, troubleshooting steps, or error procedures)
+
+Never invent:
+* URLs
+* email addresses
+* phone numbers
+* websites
+* support portals
+Only output them if they explicitly appear in retrieved context.
 
 If information is unavailable in the retrieved context, explicitly state that it was not found in company documentation:
 "The requested information was not found in the company documentation."
@@ -260,6 +279,14 @@ You are forbidden from:
 * using pretrained knowledge
 * inventing values (such as refund policies, fees, or billing cycles)
 
+Never invent:
+* URLs
+* email addresses
+* phone numbers
+* websites
+* support portals
+Only output them if they explicitly appear in retrieved context.
+
 If information is unavailable in the retrieved context, explicitly state that it was not found in company documentation:
 "The requested information was not found in the company documentation."
 
@@ -289,20 +316,33 @@ def account_agent(state: SupportState) -> SupportState:
         context = state.get("retrieved_context", "")
         prompt = f"""You are an Account Support Agent. The customer is asking about their previous support issue.
 Using the retrieved interaction from our SQLite memory database, inform the customer about their last ticket details.
-You must output the response in EXACTLY the following format:
+You must use the retrieved database context ONLY internally to find the ticket details. Do NOT display or leak any raw SQL database context, internal response storage, raw query text, or database metadata in your final response.
+
+Your final customer response must strictly contain only the greeting, the list of fields (Department, Issue Type, and Date) and a Summary:
 
 Hello {name},
 
 Your previous support issue was:
 
-* Department: <insert department name here, e.g. Billing>
-* Issue Type: <insert issue type here, e.g. Refund Request>
+* Department: <insert department name here>
+* Issue Type: <insert issue type here>
 * Date: <insert timestamp here>
 
 Summary:
-<insert a brief summary of what the customer contacted support about and the resolution they received. Do NOT repeat the entire previous generated response verbatim. Summarize it concisely.>
+<insert a brief summary of what the customer contacted support about and the resolution they received based on the database record.>
 
 Please let us know if you need any additional assistance.
+
+Rules:
+1. Do NOT output internal database metadata, internal fields like "Final Response" or "Previous interaction found in SQLite database" or brackets.
+2. Never invent:
+   * URLs
+   * email addresses
+   * phone numbers
+   * websites
+   * support portals
+   Only output them if they explicitly appear in retrieved context.
+3. Never use placeholders like [Your Name] or [Your Company Name].
 
 Retrieved History Context:
 {context}
@@ -312,7 +352,16 @@ Customer Query:
 
 Account Agent History Response:"""
     else:
-        context = rag.get_context_for_sources(query, ["Company Policy Document", "FAQ Document"])
+        # Check if the query contains password reset keywords
+        pw_keywords = ["password", "forgot password", "reset password", "login issue"]
+        is_pw_query = any(kw in query.lower() for kw in pw_keywords)
+        
+        if is_pw_query:
+            sources = ["Technical Manual", "FAQ Document"]
+        else:
+            sources = ["Company Policy Document", "FAQ Document"]
+            
+        context = rag.get_context_for_sources(query, sources)
         state["retrieved_context"] = context
         prompt = f"""You are an Account Support Agent. You must answer the customer's query using ONLY information explicitly contained in the retrieved context below.
 
@@ -327,6 +376,14 @@ You are forbidden from:
 
 Special Guardrails for Password Reset queries:
 - Only discuss: the forgot password process, reset email, reset link expiration, and spam folder checks as details retrieved from the context. Do NOT mention any unrelated company policies.
+
+Never invent:
+* URLs
+* email addresses
+* phone numbers
+* websites
+* support portals
+Only output them if they explicitly appear in retrieved context.
 
 If information is unavailable in the retrieved context, explicitly state that it was not found in company documentation:
 "The requested information was not found in the company documentation."
@@ -393,12 +450,25 @@ Rules:
 5. You must replace any occurrences of "[Your Name]" or name placeholders with: "ABC Technologies Support Team"
 6. Never output placeholders enclosed in brackets under any circumstances. Ensure all signatures and sign-offs refer to "ABC Technologies Support Team" and the company is "ABC Technologies".
 7. You must answer and validate using ONLY information explicitly contained in the customer query or the agent draft. Do NOT invent prices, dates, plans, policies, features, or procedures.
-8. Output ONLY the final customer response. Do not add metadata, labels, or extra text.
+8. Never invent:
+   * URLs
+   * email addresses
+   * phone numbers
+   * websites
+   * support portals
+   Only output them if they explicitly appear in retrieved context or the agent draft.
+9. Output ONLY the final customer response. Do not add metadata, labels, or extra text.
 
 Final Response:"""
     
     res = llm.invoke(supervisor_prompt)
     final_response = res.content.strip()
+    
+    # Automatically replace placeholders to guarantee bracketed names are never output
+    final_response = final_response.replace("[Your Company Name]", "ABC Technologies")
+    final_response = final_response.replace("[Your Name]", "ABC Technologies Support Team")
+    final_response = final_response.replace("[Company Name]", "ABC Technologies")
+    final_response = final_response.replace("[Support Team]", "ABC Technologies Support Team")
     
     # Save the final response to state
     state["generated_response"] = final_response
