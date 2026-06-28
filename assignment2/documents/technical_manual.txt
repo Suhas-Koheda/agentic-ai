@@ -1,0 +1,31 @@
+=========================================
+TECHNICAL MANUAL & TROUBLESHOOTING GUIDE
+=========================================
+
+1. FILE UPLOAD CRASHES AND ERRORS:
+- Symptom: The application crashes or throws an error whenever a customer uploads a file.
+- Root Cause: This typically occurs if:
+  1. The file size exceeds the maximum limit of 10MB per file.
+  2. The file extension is not in the approved list (.pdf, .png, .jpg, .jpeg, .csv, .txt, .zip).
+  3. The local internet connection drops during chunk upload, causing a timeout.
+- Troubleshooting Steps:
+  Step 1: Check the file size. Ensure it is under 10MB. If larger, compress the file.
+  Step 2: Check the file format. Convert files to supported formats (.pdf, .png, .jpg).
+  Step 3: Clear the web browser cache and cookies, then restart the browser.
+  Step 4: If using the web application, try the desktop client or vice versa.
+  Step 5: Disable any active ad-blockers or browser extensions that might intercept upload requests.
+  Step 6: If the issue persists, obtain the exact error code or console log and contact the engineering team.
+
+2. PASSWORD RESET PROCEDURES:
+- Symptom: User forgot their password or cannot log in to their account.
+- Steps to Reset Password:
+  Step 1: Go to the application login screen.
+  Step 2: Click the "Forgot Password" or "Reset Password" link below the login form.
+  Step 3: Enter the registered email address and click "Send Reset Link".
+  Step 4: Check the inbox for an email from support@company.com with the subject "Reset Your Password".
+  Step 5: Click the reset link in the email. Note that the link expires after 1 hour.
+  Step 6: If the email does not arrive:
+    - Check the Spam, Junk, and Promotions folders.
+    - Verify that support@company.com is whitelisted in your email client.
+    - Wait up to 5 minutes as email servers can sometimes delay delivery.
+  Step 7: Enter a new secure password (must be at least 8 characters, with 1 uppercase letter, 1 number, and 1 special character) and save.

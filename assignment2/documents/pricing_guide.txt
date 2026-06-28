@@ -1,0 +1,43 @@
+=========================================
+SOFTWARE PRICING & PLANS GUIDE
+=========================================
+
+1. PRICING PLANS:
+
+* Standard Plan:
+  - Price: $10 per month (billed monthly) or $96 per year (billed annually - saves 20%).
+  - Target: Solo developers, freelancers, and small projects.
+  - Features included:
+    - 1 User seat
+    - Up to 5 projects
+    - 10GB cloud storage
+    - Standard email support (24-hour response time)
+    - Basic integrations
+
+* Professional Plan:
+  - Price: $29 per month (billed monthly) or $276 per year (billed annually - saves 20%).
+  - Target: Growing teams and professional businesses.
+  - Features included:
+    - Up to 10 User seats
+    - Unlimited projects
+    - 100GB cloud storage
+    - Priority email and chat support (2-hour response time)
+    - Advanced integrations (Slack, Jira, GitHub)
+    - Basic analytics and reporting dashboard
+
+* Enterprise Plan:
+  - Price: $99 per month (billed monthly) or $950 per year (billed annually - saves 20%).
+  - Target: Large organizations and high-scale operations.
+  - Features included:
+    - Unlimited User seats
+    - Unlimited projects
+    - 1TB cloud storage (expandable)
+    - Dedicated Support Manager and 24/7 phone support
+    - Custom integrations and API access
+    - Advanced security (SAML SSO, Audit logs)
+    - Custom contract and invoicing options
+
+2. BILLING CYCLES:
+- All plans are available in Monthly or Annual cycles.
+- Annual cycles are billed upfront and come with a 20% discount compared to monthly pricing.
+- Upgrades are processed immediately with prorated charges. Downgrades take effect at the end of the current billing cycle.

@@ -1,0 +1,20 @@
+=========================================
+FREQUENTLY ASKED QUESTIONS (FAQ)
+=========================================
+
+Q: What are your support operating hours?
+A: Our support team is active and available Monday through Friday, from 9:00 AM to 6:00 PM IST (Indian Standard Time). We observe major national holidays. For Enterprise customers, we offer 24/7 priority phone support.
+
+Q: Where is your company located?
+A: Our primary corporate headquarters are located in Bangalore, Karnataka, India. We also have regional satellite offices and remote support personnel situated globally across the United States, Europe, and Asia-Pacific.
+
+Q: Do you offer student discounts?
+A: Yes! We offer a special 15% discount on our Standard and Professional plans for active students, educators, and academic institutions. To apply:
+   1. Contact our support team with a valid student/faculty ID or school email (.edu).
+   2. Our billing team will verify your academic status and apply the discount code to your account within 24 hours.
+
+Q: Can I share my account with multiple users?
+A: The Standard Plan is limited to 1 user seat. If you have a team, you should subscribe to the Professional Plan (up to 10 users) or the Enterprise Plan (unlimited users). Sharing credentials violates our Terms of Service.
+
+Q: Is my data secure with your software?
+A: Yes, we encrypt all data in transit using TLS 1.3 and at rest using AES-256 encryption. Our systems are compliant with SOC 2 Type II and GDPR regulations.

@@ -1,0 +1,30 @@
+=========================================
+COMPANY POLICY DOCUMENT - CUSTOMER SUPPORT
+=========================================
+
+1. REFUND POLICY:
+- Customers can request a full refund within 14 days of their initial purchase or renewal.
+- Refund requests after 14 days are generally not permitted unless under extenuating circumstances.
+- All refund requests must be routed to Billing Support, flags set to Pending, and must wait for Supervisor/Management approval. No automated refunds are permitted.
+- If approved, refunds are processed within 5-10 business days to the original payment method.
+
+2. SUBSCRIPTION CANCELLATION:
+- Customers may cancel their subscription at any time.
+- Cancellation requests do not yield immediate refunds unless requested within the 14-day refund window.
+- All subscription cancellation requests must be verified, require Human-in-the-Loop approval to prevent accidental data loss and check for retention offers, and must be approved by a supervisor before finalizing.
+- Upon cancellation, the subscription remains active until the end of the current billing cycle.
+
+3. ACCOUNT CLOSURE POLICY:
+- Customers can request permanent closure of their accounts.
+- Account closure is irreversible and results in the permanent deletion of all customer data, files, and history after 30 days.
+- Due to the destructive nature of this action, all account closure requests must be routed to Account Support, require Human-in-the-Loop approval, and must be verified by a supervisor.
+
+4. COMPENSATION POLICY:
+- Compensation or account credits may be offered to customers experiencing prolonged downtime or severe service degradation.
+- Standard agents cannot issue compensation. All compensation requests are classified as high-priority and require Supervisor approval.
+- Maximum standard supervisor compensation is limited to $50 or 1 month of free service. Higher amounts require executive manager approval.
+
+5. ESCALATION TO MANAGEMENT:
+- A customer may request their case be escalated to management if they are dissatisfied with the support resolution.
+- Agents must document the reason for escalation, draft an escalation summary, and route the case for Human-in-the-Loop review.
+- The supervisor must review the customer history and approve the escalation before transferring the ticket to the management queue.

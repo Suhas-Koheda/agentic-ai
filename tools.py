@@ -56,25 +56,25 @@ def fee_balance_calculator(total_fee:int, paid_fee:int):
     return f"Fee Balance: {balance}"
 
 @tool
-def library_fine_calucaltor(days_overdue:int):
+def library_fine_calculator(days_overdue:int):
     """this function is to calculate the library fine of a student based on the number of days overdue.
     Args:
         days_overdue (int): number of days overdue
     Returns:
         str: the library fine of the student"""
     fine=days_overdue*5
-    return f"Library Fine: {fine}"
+    return f"Library Fine: ₹{fine}"
 
 @tool
-def hostel_fee_calculator(total_fee:int, paid_fee:int):
-    """this function is to calculate the hostel fee balance of a student based on the total fee and paid fee.
+def hostel_fee_calculator(monthly_fee:int, months_stayed:int):
+    """this function is to calculate the total hostel fee based on monthly fee and months stayed.
     Args:
-        total_fee (int): total hostel fee of the student
-        paid_fee (int): hostel fee paid by the student
+        monthly_fee (int): monthly hostel fee
+        months_stayed (int): number of months stayed
     Returns:
-        str: the hostel fee balance of the student"""   
-    balance=total_fee-paid_fee
-    return f"Hostel Fee Balance: {balance}"
+        str: the total hostel fee of the student"""   
+    total_fee=monthly_fee*months_stayed
+    return f"Total Hostel Fee: ₹{total_fee}"
 
 students = {
     "101": {
@@ -93,9 +93,13 @@ students = {
 def student_information(student_id: str):
     """
     Retrieve student information by student ID.
+    Args:
+        student_id (str): the student ID
+    Returns:
+        dict or str: student information or not found message
     """
-
     if student_id not in students:
         return "Student not found"
-
-    return students[student_id]
+    
+    student = students[student_id]
+    return f"Name: {student['name']}, Department: {student['department']}, Year: {student['year']}"

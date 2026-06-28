@@ -6,13 +6,13 @@ from tools import(
     attendance_calculator,
     result_calculator,
     fee_balance_calculator,
-    library_fine_calucaltor,
+    library_fine_calculator,
     hostel_fee_calculator,
     student_information
 )
 
 llm=ChatOllama(model="gemma4:e2b",temperature=0.0)
-tools=[attendance_calculator,result_calculator,fee_balance_calculator,library_fine_calucaltor,hostel_fee_calculator,student_information]
+tools=[attendance_calculator,result_calculator,fee_balance_calculator,library_fine_calculator,hostel_fee_calculator,student_information]
 prompt = ChatPromptTemplate.from_messages(
     [
         (
@@ -42,13 +42,30 @@ agent_executor = AgentExecutor(
 
 print("College Assistant Ready")
 print("Type exit to quit")
+print("(For multi-line queries, type queries line by line or press Ctrl+D when done)")
 
 while True:
-
-    query = input("\nStudent: ")
-
-    if query.lower() == "exit":
-        break
+    print("\nStudent: ", end="")
+    lines = []
+    try:
+        while True:
+            line = input()
+            if line.lower() == "exit":
+                print("Goodbye!")
+                exit()
+            lines.append(line)
+            if len(lines) > 1 and line.strip() == "":
+                lines.pop()
+                break
+            if len(lines) == 1:
+                break
+    except EOFError:
+        pass
+    
+    query = "\n".join(lines)
+    
+    if not query.strip():
+        continue
 
     response = agent_executor.invoke(
         {
@@ -58,19 +75,3 @@ while True:
 
     print("\nAssistant:")
     print(response["output"])
-
-
-# I attended 72 classes out of 90. Am I eligible for exams?
-# My marks are 95, 90, 88, 91 and 87. What is my grade?
-# My course fee is 50000 and I have paid 35000. How much fee is pending?
-# I returned a library book 8 days late. What is the fine amount?
-# Hostel fee is 6000 per month and I stayed for 5 months.
-
-# I attended 80 classes out of 100.
-# My marks are 90, 85, 88, 92 and 95.
-# My course fee is 60000 and I paid 45000.
-
-# Provide:
-# 1. Attendance Status
-# 2. Grade
-# 3. Pending Fee
