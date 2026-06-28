@@ -215,6 +215,11 @@ Customer Query:
 {query}
 
 Sales Agent Draft Response:"""
+
+    # Preprocessing step to encourage summarizing pricing plans from retrieved context
+    if "Standard Plan" in context and "Professional Plan" in context and "Enterprise Plan" in context:
+        prompt = "The retrieved context already contains pricing information.\nYou must summarize the pricing plans from the retrieved context rather than stating that pricing information is unavailable.\n\n" + prompt
+
     res = llm.invoke(prompt)
     state["generated_response"] = res.content.strip()
     return state
