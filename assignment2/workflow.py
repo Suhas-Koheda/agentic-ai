@@ -1,13 +1,14 @@
 import os
 import sqlite3
-from typing import TypedDict, List, Dict, Any, Optional
-from langchain_ollama import ChatOllama
-from langgraph.graph import StateGraph, START, END
-from langgraph.checkpoint.sqlite import SqliteSaver
+from typing import Any, Dict, List, Optional, TypedDict
+
+import memory
 
 # Import RAG and Memory modules
 import rag
-import memory
+from langchain_ollama import ChatOllama
+from langgraph.checkpoint.sqlite import SqliteSaver
+from langgraph.graph import END, START, StateGraph
 
 # Ensure memory DB is initialized
 memory.init_db()
@@ -464,10 +465,35 @@ Rules:
    Only output them if they explicitly appear in retrieved context or the agent draft.
 9. Output ONLY the final customer response. Do not add metadata, labels, or extra text.
 
+CRITICAL:
+Do NOT output the list of rules, instructions, or internal reasoning in your final response. Output ONLY the finalized response text that the customer will read. Do NOT output 'Rules:', '1.', '2.', '3.', '4.', '5.', '6.', '7.', '8.', or '9.' anywhere in your output.
+
 Final Response:"""
     
     res = llm.invoke(supervisor_prompt)
     final_response = res.content.strip()
+    
+    # Programmatically clean up any leaked rule lines to guarantee they never reach the customer
+    cleaned_lines = []
+    for line in final_response.split("\n"):
+        stripped = line.strip()
+        # Check if the line starts with "Rules:"
+        if stripped.lower().startswith("rules:"):
+            continue
+        # Check if it starts with digits 1-9 followed by a period and contains supervisor prompt keywords
+        is_supervisor_rule = False
+        for digit in ["1", "2", "3", "4", "5", "6", "7", "8", "9"]:
+            prefix = f"{digit}."
+            if stripped.startswith(prefix):
+                content = stripped[len(prefix):].strip().lower()
+                keywords = ["approval", "placeholder", "refine", "decline", "replace", "technologies", "brackets", "invent", "metadata", "llm", "supervisor", "factual", "rules", "customer response"]
+                if any(kw in content for kw in keywords):
+                    is_supervisor_rule = True
+                    break
+        if is_supervisor_rule:
+            continue
+        cleaned_lines.append(line)
+    final_response = "\n".join(cleaned_lines).strip()
     
     # Automatically replace placeholders to guarantee bracketed names are never output
     final_response = final_response.replace("[Your Company Name]", "ABC Technologies")
