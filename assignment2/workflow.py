@@ -182,9 +182,23 @@ def sales_agent(state: SupportState) -> SupportState:
     context = rag.get_context_for_sources(query, ["Pricing Guide", "FAQ Document"])
     state["retrieved_context"] = context
     
-    prompt = f"""You are a Sales Support Agent. Answer the customer's query using the retrieved context.
-If the answer is in the context, be specific and quote pricing or features accurately.
-Be professional, friendly, and helpful.
+    prompt = f"""You are a Sales Support Agent. Answer the customer's query using ONLY the facts present in the retrieved context. Do NOT invent or hallucinate any details, prices, features, or policies not directly present in the context.
+
+Rules:
+1. If the customer is asking about pricing or subscription plans:
+   - Your response must include the following plans and prices ONLY:
+     * Standard Plan:
+       - $10/month
+       - $96/year
+     * Professional Plan:
+       - $29/month
+       - $276/year
+     * Enterprise Plan:
+       - $99/month
+       - $950/year
+   - If this pricing information is not present in the retrieved context, explicitly state that the information was not found in company documentation and do NOT output any prices.
+2. If any general information requested is unavailable in the retrieved context, explicitly state that the information was not found in company documentation.
+3. Never use placeholders like [Your Name] or [Your Company Name].
 
 Retrieved Context:
 {context}
@@ -205,9 +219,21 @@ def technical_agent(state: SupportState) -> SupportState:
     context = rag.get_context_for_sources(query, ["Technical Manual"])
     state["retrieved_context"] = context
     
-    prompt = f"""You are a Technical Support Agent. Answer the customer's technical query using the retrieved manual pages.
-Provide clear step-by-step troubleshooting instructions from the manual if applicable.
-Be professional, highly precise, and polite.
+    prompt = f"""You are a Technical Support Agent. Answer the customer's technical query using ONLY the facts present in the retrieved manual context.
+
+Rules:
+1. For file upload crash queries:
+   - You must summarize the retrieved technical context and include these specific troubleshooting steps from the manual:
+     * Verify file size is below 10MB.
+     * Verify file format is supported.
+     * Clear browser cache and cookies.
+     * Try desktop application or web application.
+     * Disable browser extensions.
+     * Collect error logs if issue persists.
+   - Do NOT return a generic support message; provide a direct summary of the troubleshooting steps.
+2. Do NOT invent any facts, dates, procedures, or features not directly present in the context.
+3. If the requested information is unavailable in the context, explicitly state that the information was not found in company documentation.
+4. Never use placeholders like [Your Name] or [Your Company Name].
 
 Retrieved Context:
 {context}
@@ -280,8 +306,15 @@ Account Agent History Response:"""
     else:
         context = rag.get_context_for_sources(query, ["Company Policy Document", "FAQ Document"])
         state["retrieved_context"] = context
-        prompt = f"""You are an Account Support Agent. Answer the customer's account query (e.g. password resets, security, account closure) using the company policies and FAQ.
-Provide clear instructions or status details.
+        prompt = f"""You are an Account Support Agent. Answer the customer's account query (e.g. password resets, security, account closure) using ONLY the facts present in the retrieved context.
+
+Rules:
+1. For password reset queries:
+   - Only discuss: the forgot password process, reset email, reset link expiration, and spam folder checks.
+   - Do NOT mention: compensation policy, refunds, billing policy, or any other unrelated company policies.
+2. Do NOT invent, hallucinate, or assume any facts, policies, dates, support procedures, or features not directly in the context.
+3. If the requested information is unavailable in the retrieved context, explicitly state that the information was not found in company documentation.
+4. Never use placeholders like [Your Name] or [Your Company Name].
 
 Retrieved Context:
 {context}
@@ -326,7 +359,7 @@ def supervisor_agent(state: SupportState) -> SupportState:
     name = state.get("customer_info", {}).get("name", "Unknown")
     
     # Prompt the supervisor LLM to review, validate, and refine the response draft
-    supervisor_prompt = f"""You are a Customer Support Supervisor. Your role is to review and finalize the agent's draft response to a customer query.
+    supervisor_prompt = f"""You are a Customer Support Supervisor for ABC Technologies. Your role is to review and finalize the agent's draft response to a customer query.
 
 Customer Name: {name}
 Customer Query: {query}
@@ -339,7 +372,11 @@ Rules:
 1. If the approval status is 'Approved', ensure the final response explicitly confirms that the supervisor has reviewed and approved the action.
 2. If the approval status is 'Rejected', rewrite the response to politely decline the request, explicitly mentioning that the supervisor has reviewed and rejected the request.
 3. If the approval status is 'Not Required', refine the draft response for clarity, tone, and professional grammar, maintaining the same factual information. Do NOT mention supervisor approval or rejection, and do NOT state that any request was approved or rejected by a supervisor.
-4. Output ONLY the final customer response. Do not add metadata, labels, or extra text.
+4. You must replace any occurrences of "Thank you for choosing [Your Company Name]." or general company name placeholders with: "Thank you for choosing ABC Technologies."
+5. You must replace any occurrences of "Best regards,\n[Your Name]" or name placeholders with: "Best regards,\nABC Technologies Support Team"
+6. Never output placeholders under any circumstances (such as [Your Company Name], [Your Name], [Company Name], or brackets). Ensure all sign-offs and signatures reference "ABC Technologies Support Team".
+7. Responses must only use facts present in the agent's draft or the query. Do not invent any pricing, dates, policies, or features.
+8. Output ONLY the final customer response. Do not add metadata, labels, or extra text.
 
 Final Response:"""
     
