@@ -199,13 +199,13 @@ Sales Agent Draft Response:"""
 
 def technical_agent(state: SupportState) -> SupportState:
     """
-    Technical Support Agent: Retrieves context from Technical Manual & FAQ, drafts technical response.
+    Technical Support Agent: Retrieves context from Technical Manual only, drafts technical response.
     """
     query = state.get("customer_query", "")
-    context = rag.get_context_for_sources(query, ["Technical Manual", "FAQ Document"])
+    context = rag.get_context_for_sources(query, ["Technical Manual"])
     state["retrieved_context"] = context
     
-    prompt = f"""You are a Technical Support Agent. Answer the customer's technical query using the retrieved manual pages and FAQ.
+    prompt = f"""You are a Technical Support Agent. Answer the customer's technical query using the retrieved manual pages.
 Provide clear step-by-step troubleshooting instructions from the manual if applicable.
 Be professional, highly precise, and polite.
 
@@ -248,13 +248,27 @@ def account_agent(state: SupportState) -> SupportState:
     Can also handle memory lookup answers.
     """
     query = state.get("customer_query", "")
+    name = state.get("customer_info", {}).get("name", "Unknown")
     
     # If this is a SQLite history query, retrieved_context is already populated in load_customer_info_and_history
     if state.get("issue_type") == "Memory Retrieval":
         context = state.get("retrieved_context", "")
         prompt = f"""You are an Account Support Agent. The customer is asking about their previous support issue.
 Using the retrieved interaction from our SQLite memory database, inform the customer about their last ticket details.
-Summarize what their previous issue was, which department handled it, and the resolution they received.
+You must output the response in EXACTLY the following format:
+
+Hello {name},
+
+Your previous support issue was:
+
+* Department: <insert department name here, e.g. Billing>
+* Issue Type: <insert issue type here, e.g. Refund Request>
+* Date: <insert timestamp here>
+
+Summary:
+<insert a brief summary of what the customer contacted support about and the resolution they received. Do NOT repeat the entire previous generated response verbatim. Summarize it concisely.>
+
+Please let us know if you need any additional assistance.
 
 Retrieved History Context:
 {context}
@@ -322,9 +336,9 @@ Approval Status: {approval}
 Agent Draft Response: {draft}
 
 Rules:
-1. If the approval status is 'Approved', ensure the final response confirms that the supervisor has reviewed and approved the action (e.g. 'This request has been approved by our supervisor management team...').
-2. If the approval status is 'Rejected', rewrite the response to politely decline the request (e.g., 'Refund requests are only processed within 14 days of purchase. Your request could not be approved because...').
-3. If no approval was required, refine the draft response for clarity, tone, and professional grammar, maintaining the same factual information. Do not change facts.
+1. If the approval status is 'Approved', ensure the final response explicitly confirms that the supervisor has reviewed and approved the action.
+2. If the approval status is 'Rejected', rewrite the response to politely decline the request, explicitly mentioning that the supervisor has reviewed and rejected the request.
+3. If the approval status is 'Not Required', refine the draft response for clarity, tone, and professional grammar, maintaining the same factual information. Do NOT mention supervisor approval or rejection, and do NOT state that any request was approved or rejected by a supervisor.
 4. Output ONLY the final customer response. Do not add metadata, labels, or extra text.
 
 Final Response:"""
