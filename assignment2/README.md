@@ -26,8 +26,8 @@ The workflow is designed as a stateful graph where each node processes the state
                                │ (Refund / Cancel)
                                ▼
                         [ human_approval ] (HITL Interrupt)
-                               │ (Resumed by Supervisor)
-                               ▼
+                              │ (Resumed by Supervisor)
+                              ▼
                        [ supervisor_agent ] ──► [ END ]
 ```
 
@@ -64,7 +64,7 @@ pip install -r requirements.txt
 
 ## 📖 Module Descriptions
 
-*   **`workflow.py`**: Definess the `SupportState` schema, builds the state graph using `StateGraph`, implements intent classification, contains the specialized agents (Sales, Technical, Billing, Account), details conditional routing rules, and configures the Supervisor validation node.
+*   **`workflow.py`**: Defines the `SupportState` schema, builds the state graph using `StateGraph`, implements intent classification, contains the specialized agents (Sales, Technical, Billing, Account), details conditional routing rules, and configures the Supervisor validation node.
 *   **`rag.py`**: Loads company documents, splits them using a character splitter, builds a BM25 index, and performs source-filtered text retrieval.
 *   **`memory.py`**: Initializes the SQLite database schemas and manages the saving and querying of customer history interactions.
 *   **`demo.py`**: The main executable script. It clears previous database files for reproducibility, sets up a persistent thread session, feeds a sequence of 5 test queries, handles interactive terminal prompt pauses for human approval, and outputs styled UI panels using the `rich` library.
@@ -78,24 +78,32 @@ pip install -r requirements.txt
 
 ## 🔍 Key Implementations Explained
 
-### 1. Local RAG Pipeline (BM25)
-The system uses the `rank-bm25` algorithm to perform search-retrieval locally without requiring vector search databases or third-party embedding APIs:
-*   **Loading & Splitting**: Plaintext documents are loaded and split into small chunks using `RecursiveCharacterTextSplitter`.
-*   **Department-Specific Source Filtering**: When an agent requests context, it only retrieves pages from matching documents. For instance, the **Technical Agent** only queries `technical_manual.txt` and `faq_document.txt`. This keeps context sizes minimal and prevents interference.
+### 1. Strict RAG Grounding (Single Source of Truth)
+The agents treat the retrieved context as the absolute source of truth. No pricing tiers, refund eligibility window periods, or file size limits are hardcoded within agent prompts. 
+*   **No Hallucinations/Prior Knowledge**: All agent prompts are explicitly constrained to prevent guess work, inference, or utilizing pretrained information.
+*   **Strict Fallbacks**: If requested information is absent in the retrieved context, the agents are instructed to output verbatim: `"The requested information was not found in the company documentation."`
+*   **Prohibition of Hallucinated Details**: Agents are strictly forbidden from fabricating contact details such as URLs, email addresses, phone numbers, websites, or support portals. They may only output them if they are explicitly present in the retrieved context.
 
-### 2. SQLite State & Interaction Memory
-The system runs two distinct levels of data storage:
-*   **Checkpointer Persistence (`langgraph_checkpoints.db`)**: LangGraph's `SqliteSaver` records state history of the thread. This is what permits interrupting a run, modifying state variables, and resuming exactly where it stopped.
-*   **Long-Term Memory (`customer_memory.db`)**: Stores the final resolved interaction payload (customer name, department, query, finalized response, timestamp). When a customer runs a "Memory Retrieval" query, this database is searched using their name to fetch what issue they previously filed.
+### 2. Dynamic Source Selection (Password Reset)
+In `account_agent()`, the system implements a dynamic context-sourcing guardrail:
+*   If the query references password reset or login issues (e.g., contains keywords like `password`, `forgot password`, `reset password`, or `login issue`), the retrieval logic redirects to query the `["Technical Manual", "FAQ Document"]` documents.
+*   Otherwise, it queries `["Company Policy Document", "FAQ Document"]`.
 
-### 3. Human-in-the-Loop (HITL) Gate
-High-risk queries (Refunds or subscription cancellations) trigger an interrupt before executing the final action:
-*   The intent classifier flags the issue as a refund request.
-*   The billing agent drafts a refund ticket, setting `approval_status` to `"Pending"`.
-*   The `StateGraph` is compiled with `interrupt_before=["human_approval"]`. When reaching this node, the graph halts.
-*   `demo.py` displays the draft and prompts the user for action:
-    *   **Approve (`1`)**: Changes state `approval_status` to `"Approved"`. The supervisor agent completes the refund and logs it.
-    *   **Reject (`2`)**: Changes state `approval_status` to `"Rejected"`. The supervisor agent informs the user of denial.
+### 3. Customer Interaction Memory & Context Security
+*   **Interaction Storage (`customer_memory.db`)**: Captures historical ticket logs securely.
+*   **Anti-Leak Protection**: When running memory queries, the prompt and post-processing structures prevent raw SQL metadata, raw queries, database timestamps, or internal columns (like `Final Response`) from leaking into final responses. Output is cleanly formatted to show only:
+    - Customer Greeting
+    - Department
+    - Issue Type
+    - Date
+    - Summarized resolution
+*   **Programmatic Rule Stripping**: To prevent internal supervisor rule lists (e.g. `Rules: 1. If approval status is Approved...`) from leaking, the supervisor node applies a line filter that strips out leaked rules and system constraints.
+
+### 4. Enterprise Identity Mapping
+Any placeholders (such as `[Your Company Name]` or `[Your Name]`) are automatically resolved and replaced:
+*   `[Your Company Name]` ➔ `ABC Technologies`
+*   `[Your Name]` ➔ `ABC Technologies Support Team`
+A safety filter programmatically replaces any brackets-enclosed values inside supervisor node outputs to guarantee bracketed placeholders are never exposed.
 
 ---
 
@@ -108,9 +116,9 @@ python demo.py
 
 ### Script Execution Flow
 1. **Reset**: The script deletes any existing SQLite files on startup to ensure a clean demo.
-2. **Query 1**: Asks about pricing (Routed to **Sales**, answers from `pricing_guide.txt`).
-3. **Query 2**: Asks for password reset (Routed to **Account**, answers from manual).
-4. **Query 3**: Reports application crash (Routed to **Technical**, troubleshooting rules retrieved).
-5. **Query 4**: Requests a refund as **David** (Routed to **Billing**, halts at `human_approval` prompt).
+2. **Query 1**: Asks about pricing (Routed to **Sales**, answers from `pricing_guide.txt` and summarized dynamically).
+3. **Query 2**: Asks for password reset (Routed to **Account**, dynamically queries the `Technical Manual` and manual steps).
+4. **Query 3**: Reports application crash (Routed to **Technical**, troubleshooting rules retrieved from manual).
+5. **Query 4**: Requests a refund as **David** (Routed to **Billing**, halts at `human_approval` prompt for approval).
     *   *Interactive:* Enter `1` to approve or `2` to reject the refund.
-6. **Query 5**: Asks *"What was my previous support issue?"* (Routed to **Account**, pulls history for **David** from `customer_memory.db` and recalls the refund).
+6. **Query 5**: Asks *"What was my previous support issue?"* (Routed to **Account**, pulls history for **David** from SQLite memory and summarizes the resolution securely without database context leakage).
